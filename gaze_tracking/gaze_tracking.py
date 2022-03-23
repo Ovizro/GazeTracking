@@ -3,7 +3,7 @@ import os
 import numpy as np
 import cv2
 import dlib
-from .eye import Eye
+from .eye import BOTH_EYES, LEFT_EYE, RIGHT_EYE, Eye
 from .calibration import Calibration
 
 
@@ -134,24 +134,43 @@ class GazeTracking(object):
             blinking_ratio = (self.eye_left.blinking + self.eye_right.blinking) / 2
             return blinking_ratio > 3.8
     
-    def annotated_eye(self, side: int, line_size: int = 1) -> np.ndarray:
-        ...
+    def annotated_eye(self, side: int = BOTH_EYES, line_size: int = 1) -> np.ndarray:
+        """Returns the main frame with eyes highlighted"""
+        frame = self.frame
+        if not self.pupils_located:
+            return frame
 
-    def annotated_pupil(self, line_size: int = 1) -> np.ndarray:
+        color = (255, 0, 0)
+        if side in [LEFT_EYE, BOTH_EYES]:
+            pos1 = self.eye_left.origin
+            pos2 = (pos1[0] + self.eye_left.size[0], pos1[1] + self.eye_left.size[1])
+            cv2.rectangle(frame, pos1, pos2, color, line_size)
+        if side in [RIGHT_EYE, BOTH_EYES]:
+            pos1 = self.eye_right.origin
+            pos2 = (pos1[0] + self.eye_right.size[0], pos1[1] + self.eye_right.size[1])
+            cv2.rectangle(frame, pos1, pos2, color, line_size)
+
+        return frame
+
+    def annotated_pupil(self, side: int = BOTH_EYES, line_size: int = 1) -> np.ndarray:
         """Returns the main frame with pupils highlighted"""
-        frame = self.frame.copy()
+        frame = self.frame
+        if not self.pupils_located:
+            return frame
+
         if self.equalizehist:
             frame = hisEqulColor(frame)
             self.equalizehist = False
 
         line_len = 3 + 2 * line_size
 
-        if self.pupils_located:
-            color = (0, 255, 0)
+        color = (0, 255, 0)
+        if side in [LEFT_EYE, BOTH_EYES]:
             x_left, y_left = self.pupil_left_coords()
-            x_right, y_right = self.pupil_right_coords()
             cv2.line(frame, (x_left - line_len, y_left), (x_left + line_len, y_left), color, line_size)
             cv2.line(frame, (x_left, y_left - line_len), (x_left, y_left + line_len), color, line_size)
+        if side in [RIGHT_EYE, BOTH_EYES]:
+            x_right, y_right = self.pupil_right_coords()
             cv2.line(frame, (x_right - line_len, y_right), (x_right + line_len, y_right), color, line_size)
             cv2.line(frame, (x_right, y_right - line_len), (x_right, y_right + line_len), color, line_size)
 

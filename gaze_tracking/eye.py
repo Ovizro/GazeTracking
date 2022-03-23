@@ -9,6 +9,7 @@ from .calibration import Calibration
 
 LEFT_EYE = 0
 RIGHT_EYE = 1
+BOTH_EYES = 2
 
 
 def _middle_point(p1: np.ndarray, p2: np.ndarray) -> Tuple[int, int]:
@@ -26,7 +27,7 @@ class Eye(object):
     This class creates a new frame to isolate the eye and
     initiates the pupil detection.
     """
-    __slots__ = ["pupil", "landmark_points", "frame", "origin", "center", "blinking"]
+    __slots__ = ["pupil", "landmark_points", "frame", "origin", "center", "size", "blinking"]
 
     LEFT_EYE_POINTS = [36, 37, 38, 39, 40, 41]
     RIGHT_EYE_POINTS = [42, 43, 44, 45, 46, 47]
@@ -85,6 +86,7 @@ class Eye(object):
 
         self.frame: np.ndarray = eye[min_y:max_y, min_x:max_x]
         self.origin: Tuple[int, int] = (min_x, min_y)
+        self.size: Tuple[int, int] = (max_x - min_x, max_y - min_y)
         
         height, width = self.frame.shape[:2]
         self.center = (width / 2, height / 2)
