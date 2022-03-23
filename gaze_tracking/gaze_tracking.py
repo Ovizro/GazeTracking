@@ -28,10 +28,7 @@ class GazeTracking(object):
                 "equalizehist", "_face_detector", "_predictor"]
 
     def __init__(self):
-        self.frame = None
         self.equalizehist = False
-        self.eye_left = None
-        self.eye_right = None
         self.calibration = Calibration()
 
         # _face_detector is used to detect faces
@@ -45,14 +42,11 @@ class GazeTracking(object):
     @property
     def pupils_located(self):
         """Check that the pupils have been located"""
-        try:
-            int(self.eye_left.pupil.x)
-            int(self.eye_left.pupil.y)
-            int(self.eye_right.pupil.x)
-            int(self.eye_right.pupil.y)
-            return True
-        except Exception:
+        if self.eye_left is None or self.eye_right is None:
             return False
+
+        return all(i > 0 for i in [
+            self.eye_left.pupil.x, self.eye_left.pupil.y, self.eye_right.pupil.x, self.eye_right.pupil.y])
 
     def _analyze(self):
         """Detects the face and initialize Eye objects"""
@@ -143,24 +137,20 @@ class GazeTracking(object):
         color = (255, 0, 0)
         if side in [LEFT_EYE, BOTH_EYES]:
             pos1 = self.eye_left.origin
-            pos2 = (pos1[0] + self.eye_left.size[0], pos1[1] + self.eye_left.size[1])
+            pos2 = (pos1[0] + self.eye_left.center[0] * 2, pos1[1] + self.eye_left.center[1] * 2)
             cv2.rectangle(frame, pos1, pos2, color, line_size)
         if side in [RIGHT_EYE, BOTH_EYES]:
             pos1 = self.eye_right.origin
-            pos2 = (pos1[0] + self.eye_right.size[0], pos1[1] + self.eye_right.size[1])
+            pos2 = (pos1[0] + self.eye_right.center[0] * 2, pos1[1] + self.eye_right.center[1] * 2)
             cv2.rectangle(frame, pos1, pos2, color, line_size)
 
-        return frame
+        return frame.copy()
 
     def annotated_pupil(self, side: int = BOTH_EYES, line_size: int = 1) -> np.ndarray:
         """Returns the main frame with pupils highlighted"""
         frame = self.frame
         if not self.pupils_located:
             return frame
-
-        if self.equalizehist:
-            frame = hisEqulColor(frame)
-            self.equalizehist = False
 
         line_len = 3 + 2 * line_size
 
@@ -174,4 +164,18 @@ class GazeTracking(object):
             cv2.line(frame, (x_right - line_len, y_right), (x_right + line_len, y_right), color, line_size)
             cv2.line(frame, (x_right, y_right - line_len), (x_right, y_right + line_len), color, line_size)
 
-        return frame
+        return frame.copy()
+    
+    def annotated_frame(self, side: int = BOTH_EYES, line_size: int = 1) -> np.ndarray:
+        if self.equalizehist:
+            self.frame = hisEqulColor(self.frame)
+            self.equalizehist = False
+
+        self.annotated_eye(side, line_size)
+        return self.annotated_pupil(side,  line_size)
+
+    def show(self, win_name: str = "Demo") -> None:
+        cv2.imshow(win_name, self.frame)
+    
+    def save(self, file_name: str, param = None) -> None:
+        cv2.imwrite(file_name, self.frame, param)

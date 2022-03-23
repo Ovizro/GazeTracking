@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import cv2
-from typing import Any, List, Tuple
+from typing import Any, Tuple
 
 from .pupil import Pupil
 from .calibration import Calibration
@@ -27,7 +27,7 @@ class Eye(object):
     This class creates a new frame to isolate the eye and
     initiates the pupil detection.
     """
-    __slots__ = ["pupil", "landmark_points", "frame", "origin", "center", "size", "blinking"]
+    __slots__ = ["pupil", "landmark_points", "frame", "origin", "center", "blinking"]
 
     LEFT_EYE_POINTS = [36, 37, 38, 39, 40, 41]
     RIGHT_EYE_POINTS = [42, 43, 44, 45, 46, 47]
@@ -53,8 +53,8 @@ class Eye(object):
         region = region.astype(np.int32)
         self.landmark_points = region
         
-        self.blinking = self._blinking_ratio(landmarks, points)
-        self._isolate(original_frame, landmarks, points)
+        self.blinking = self._blinking_ratio()
+        self._isolate(original_frame)
 
         if not calibration.is_complete():
             calibration.evaluate(self.frame, side)
@@ -62,7 +62,7 @@ class Eye(object):
         threshold = calibration.threshold(side)
         self.pupil: Pupil = Pupil(self.frame, threshold)
 
-    def _isolate(self, frame: np.ndarray, landmarks: Any, points: List[int]) -> None:
+    def _isolate(self, frame: np.ndarray) -> None:
         """Isolate an eye, to have a frame without other part of the face.
 
         Arguments:
@@ -86,10 +86,9 @@ class Eye(object):
 
         self.frame: np.ndarray = eye[min_y:max_y, min_x:max_x]
         self.origin: Tuple[int, int] = (min_x, min_y)
-        self.size: Tuple[int, int] = (max_x - min_x, max_y - min_y)
         
         height, width = self.frame.shape[:2]
-        self.center = (width / 2, height / 2)
+        self.center = (width // 2, height // 2)
 
     @property
     def left(self) -> Tuple[int, int]:
@@ -107,7 +106,7 @@ class Eye(object):
     def bottom(self) -> Tuple[int, int]:
         return _middle_point(self.landmark_points[4], self.landmark_points[5])
 
-    def _blinking_ratio(self, landmarks, points: List[int]) -> float:
+    def _blinking_ratio(self) -> float:
         """Calculates a ratio that can indicate whether an eye is closed or not.
         It's the division of the width of the eye, by its height.
 

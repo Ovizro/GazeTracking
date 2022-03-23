@@ -31,13 +31,13 @@ while True:
     gaze.refresh(raw_frame)
     if gaze.pupils_located:
         r_count += 1
-    raw_frame_ret: np.ndarray = gaze.annotated_pupil()
+    raw_frame_ret: np.ndarray = gaze.annotated_frame()
 
     gaze.equalizehist = True
     gaze.refresh(raw_frame)
     if gaze.pupils_located:
         h_count += 1
-    frame: np.ndarray = gaze.annotated_pupil()
+    frame: np.ndarray = gaze.annotated_frame()
     text = ""
 
     if gaze.is_blinking():
