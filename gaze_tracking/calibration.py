@@ -1,5 +1,6 @@
 from __future__ import division
 import cv2
+import numpy as np
 from .pupil import Pupil
 
 
@@ -8,17 +9,18 @@ class Calibration(object):
     This class calibrates the pupil detection algorithm by finding the
     best binarization threshold value for the person and the webcam.
     """
+    __slots__ = ["nb_frames", "thresholds_left", "thresholds_right"]
 
     def __init__(self):
         self.nb_frames = 20
         self.thresholds_left = []
         self.thresholds_right = []
 
-    def is_complete(self):
+    def is_complete(self) -> bool:
         """Returns true if the calibration is completed"""
         return len(self.thresholds_left) >= self.nb_frames and len(self.thresholds_right) >= self.nb_frames
 
-    def threshold(self, side):
+    def threshold(self, side: int) -> int:
         """Returns the threshold value for the given eye.
 
         Argument:
@@ -28,9 +30,11 @@ class Calibration(object):
             return int(sum(self.thresholds_left) / len(self.thresholds_left))
         elif side == 1:
             return int(sum(self.thresholds_right) / len(self.thresholds_right))
+        else:
+            raise NotImplementedError
 
     @staticmethod
-    def iris_size(frame):
+    def iris_size(frame: np.ndarray) -> float:
         """Returns the percentage of space that the iris takes up on
         the surface of the eye.
 
@@ -44,7 +48,7 @@ class Calibration(object):
         return nb_blacks / nb_pixels
 
     @staticmethod
-    def find_best_threshold(eye_frame):
+    def find_best_threshold(eye_frame: np.ndarray) -> int:
         """Calculates the optimal threshold to binarize the
         frame for the given eye.
 
@@ -61,7 +65,7 @@ class Calibration(object):
         best_threshold, iris_size = min(trials.items(), key=(lambda p: abs(p[1] - average_iris_size)))
         return best_threshold
 
-    def evaluate(self, eye_frame, side):
+    def evaluate(self, eye_frame: np.ndarray, side: int) -> None:
         """Improves calibration by taking into consideration the
         given image.
 

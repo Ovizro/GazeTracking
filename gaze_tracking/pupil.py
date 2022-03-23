@@ -7,17 +7,18 @@ class Pupil(object):
     This class detects the iris of an eye and estimates
     the position of the pupil
     """
+    __slots__ = ["x", "y", "iris_frame", "threshold"]
 
-    def __init__(self, eye_frame, threshold):
+    def __init__(self, eye_frame: np.ndarray, threshold: int):
         self.iris_frame = None
         self.threshold = threshold
-        self.x = None
-        self.y = None
+        self.x = -1
+        self.y = -1
 
         self.detect_iris(eye_frame)
 
     @staticmethod
-    def image_processing(eye_frame, threshold):
+    def image_processing(eye_frame: np.ndarray, threshold: int) -> np.ndarray:
         """Performs operations on the eye frame to isolate the iris
 
         Arguments:
@@ -34,7 +35,7 @@ class Pupil(object):
 
         return new_frame
 
-    def detect_iris(self, eye_frame):
+    def detect_iris(self, eye_frame: np.ndarray) -> None:
         """Detects the iris and estimates the position of the iris by
         calculating the centroid.
 

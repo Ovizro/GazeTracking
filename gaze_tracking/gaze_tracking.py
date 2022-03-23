@@ -1,9 +1,20 @@
 from __future__ import division
 import os
+import numpy as np
 import cv2
 import dlib
 from .eye import Eye
 from .calibration import Calibration
+
+
+def hisEqulColor(img: np.ndarray) -> np.ndarray:
+    ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
+    channels = cv2.split(ycrcb)
+    # print len(channels)
+    cv2.equalizeHist(channels[0], channels[0])
+    cv2.merge(channels, ycrcb)
+    cv2.cvtColor(ycrcb, cv2.COLOR_YCR_CB2BGR, img)
+    return img
 
 
 class GazeTracking(object):
@@ -13,8 +24,12 @@ class GazeTracking(object):
     and pupils and allows to know if the eyes are open or closed
     """
 
+    __slots__ = ["frame", "eye_left", "eye_right", "calibration",
+                "equalizehist", "_face_detector", "_predictor"]
+
     def __init__(self):
         self.frame = None
+        self.equalizehist = False
         self.eye_left = None
         self.eye_right = None
         self.calibration = Calibration()
@@ -42,6 +57,8 @@ class GazeTracking(object):
     def _analyze(self):
         """Detects the face and initialize Eye objects"""
         frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+        if self.equalizehist:
+            frame = cv2.equalizeHist(frame)
         faces = self._face_detector(frame)
 
         try:
@@ -53,7 +70,7 @@ class GazeTracking(object):
             self.eye_left = None
             self.eye_right = None
 
-    def refresh(self, frame):
+    def refresh(self, frame: np.ndarray):
         """Refreshes the frame and analyzes it.
 
         Arguments:
@@ -116,18 +133,26 @@ class GazeTracking(object):
         if self.pupils_located:
             blinking_ratio = (self.eye_left.blinking + self.eye_right.blinking) / 2
             return blinking_ratio > 3.8
+    
+    def annotated_eye(self, side: int, line_size: int = 1) -> np.ndarray:
+        ...
 
-    def annotated_frame(self):
+    def annotated_pupil(self, line_size: int = 1) -> np.ndarray:
         """Returns the main frame with pupils highlighted"""
         frame = self.frame.copy()
+        if self.equalizehist:
+            frame = hisEqulColor(frame)
+            self.equalizehist = False
+
+        line_len = 3 + 2 * line_size
 
         if self.pupils_located:
             color = (0, 255, 0)
             x_left, y_left = self.pupil_left_coords()
             x_right, y_right = self.pupil_right_coords()
-            cv2.line(frame, (x_left - 5, y_left), (x_left + 5, y_left), color)
-            cv2.line(frame, (x_left, y_left - 5), (x_left, y_left + 5), color)
-            cv2.line(frame, (x_right - 5, y_right), (x_right + 5, y_right), color)
-            cv2.line(frame, (x_right, y_right - 5), (x_right, y_right + 5), color)
+            cv2.line(frame, (x_left - line_len, y_left), (x_left + line_len, y_left), color, line_size)
+            cv2.line(frame, (x_left, y_left - line_len), (x_left, y_left + line_len), color, line_size)
+            cv2.line(frame, (x_right - line_len, y_right), (x_right + line_len, y_right), color, line_size)
+            cv2.line(frame, (x_right, y_right - line_len), (x_right, y_right + line_len), color, line_size)
 
         return frame
