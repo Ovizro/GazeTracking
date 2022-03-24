@@ -10,7 +10,7 @@ except OSError:
 
 setup(
     name="gaze_tracking",
-    version="1.0.0-Alpha",
+    version="1.0.0-Alpha2",
     description="Eye Tracking library easily implementable to your projects",
     long_description=ldescription,
 

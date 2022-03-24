@@ -39,7 +39,7 @@ class GazeTracking(object):
         cwd = os.path.abspath(os.path.dirname(__file__))
         model_path = os.path.abspath(os.path.join(cwd, "trained_models/shape_predictor_68_face_landmarks.dat"))
         self._predictor = dlib.shape_predictor(model_path)
-        
+
         if frame is not None:
             if isinstance(frame, str):
                 frame = cv2.imread(frame)
@@ -196,8 +196,12 @@ class GazeTrackingFromVideo(GazeTracking):
     """
     __slots__ = ["capture", "flip"]
 
-    def __init__(self, capture: Union[str, int] = 0, *, equalizehist: bool = False,  flip: bool = True):
-        self.capture = cv2.VideoCapture(capture, cv2.CAP_DSHOW)
+    def __init__(self, capture: Union[str, int] = 0, *, equalizehist: bool = False,  flip: bool = False):
+        if isinstance(capture, int):
+            self.capture = cv2.VideoCapture(capture, cv2.CAP_DSHOW)
+        else:
+            self.capture = cv2.VideoCapture(capture)
+
         self.flip = flip
         super().__init__(equalizehist=equalizehist)
     
@@ -207,6 +211,7 @@ class GazeTrackingFromVideo(GazeTracking):
     def __next__(self) -> np.ndarray:
         ret, raw_frame = self.capture.read()
         if not ret:
+            self.capture.release()
             raise StopIteration(raw_frame)
         
         if self.flip:

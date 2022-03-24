@@ -1,7 +1,7 @@
 import cv2
 from gaze_tracking import GazeTrackingFromVideo
 
-gaze = GazeTrackingFromVideo(1, equalizehist=True)
+gaze = GazeTrackingFromVideo(0, flip=True)
 
 for _ in gaze:
     frame = gaze.annotated_frame()
