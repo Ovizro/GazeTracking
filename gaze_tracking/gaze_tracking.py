@@ -1,5 +1,6 @@
 from __future__ import division
 import os
+from typing import Union
 import numpy as np
 import cv2
 import dlib
@@ -27,8 +28,8 @@ class GazeTracking(object):
     __slots__ = ["frame", "eye_left", "eye_right", "calibration",
                 "equalizehist", "_face_detector", "_predictor"]
 
-    def __init__(self):
-        self.equalizehist = False
+    def __init__(self, frame: Union[np.ndarray, str, None] = None, *, equalizehist: bool = False):
+        self.equalizehist = int(equalizehist)
         self.calibration = Calibration()
 
         # _face_detector is used to detect faces
@@ -38,6 +39,11 @@ class GazeTracking(object):
         cwd = os.path.abspath(os.path.dirname(__file__))
         model_path = os.path.abspath(os.path.join(cwd, "trained_models/shape_predictor_68_face_landmarks.dat"))
         self._predictor = dlib.shape_predictor(model_path)
+        
+        if frame is not None:
+            if isinstance(frame, str):
+                frame = cv2.imread(frame)
+            self.refresh(frame)
 
     @property
     def pupils_located(self):
@@ -51,7 +57,7 @@ class GazeTracking(object):
     def _analyze(self):
         """Detects the face and initialize Eye objects"""
         frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-        if self.equalizehist:
+        if self.equalizehist == 1:
             frame = cv2.equalizeHist(frame)
         faces = self._face_detector(frame)
 
@@ -71,6 +77,8 @@ class GazeTracking(object):
             frame (numpy.ndarray): The frame to analyze
         """
         self.frame = frame
+        if self.equalizehist == 2:
+            self.equalizehist = 1
         self._analyze()
 
     def pupil_left_coords(self):
@@ -134,7 +142,7 @@ class GazeTracking(object):
         if not self.pupils_located:
             return frame
 
-        color = (255, 0, 0)
+        color = (233, 128, 0)
         if side in [LEFT_EYE, BOTH_EYES]:
             pos1 = self.eye_left.origin
             pos2 = (pos1[0] + self.eye_left.center[0] * 2, pos1[1] + self.eye_left.center[1] * 2)
@@ -167,9 +175,9 @@ class GazeTracking(object):
         return frame.copy()
     
     def annotated_frame(self, side: int = BOTH_EYES, line_size: int = 1) -> np.ndarray:
-        if self.equalizehist:
+        if self.equalizehist == 1:
             self.frame = hisEqulColor(self.frame)
-            self.equalizehist = False
+            self.equalizehist = 2
 
         self.annotated_eye(side, line_size)
         return self.annotated_pupil(side,  line_size)
@@ -179,3 +187,30 @@ class GazeTracking(object):
     
     def save(self, file_name: str, param = None) -> None:
         cv2.imwrite(file_name, self.frame, param)
+
+
+class GazeTrackingFromVideo(GazeTracking):
+    """
+    This class inherits from 'GazeTracking'.
+    It provides an encapsulation iter to read from VideoCapture.
+    """
+    __slots__ = ["capture", "flip"]
+
+    def __init__(self, capture: Union[str, int] = 0, *, equalizehist: bool = False,  flip: bool = True):
+        self.capture = cv2.VideoCapture(capture, cv2.CAP_DSHOW)
+        self.flip = flip
+        super().__init__(equalizehist=equalizehist)
+    
+    def __iter__(self) -> "GazeTrackingFromVideo":
+        return self
+    
+    def __next__(self) -> np.ndarray:
+        ret, raw_frame = self.capture.read()
+        if not ret:
+            raise StopIteration(raw_frame)
+        
+        if self.flip:
+            raw_frame = cv2.flip(raw_frame, 1)
+        
+        self.refresh(raw_frame)
+        return self.frame
