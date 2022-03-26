@@ -43,6 +43,8 @@ class GazeTracking(object):
         if frame is not None:
             if isinstance(frame, str):
                 frame = cv2.imread(frame)
+                if frame is None:
+                    raise OSError("Invalid frame path.")
             self.refresh(frame)
 
     @property
@@ -196,8 +198,10 @@ class GazeTrackingFromVideo(GazeTracking):
     """
     __slots__ = ["capture", "flip"]
 
-    def __init__(self, capture: Union[str, int] = 0, *, equalizehist: bool = False,  flip: bool = False):
-        if isinstance(capture, int):
+    def __init__(self, capture: Union[str, int, cv2.VideoCapture] = 0, *, equalizehist: bool = False,  flip: bool = False):
+        if isinstance(capture, cv2.VideoCapture):
+            self.capture = capture
+        elif isinstance(capture, int):
             self.capture = cv2.VideoCapture(capture, cv2.CAP_DSHOW)
         else:
             self.capture = cv2.VideoCapture(capture)
@@ -205,13 +209,32 @@ class GazeTrackingFromVideo(GazeTracking):
         self.flip = flip
         super().__init__(equalizehist=equalizehist)
     
+    @property
+    def width(self) -> int:
+        return int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    
+    @property
+    def height(self) -> int:
+        return int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    @property
+    def fps(self) -> int:
+        fps = self.capture.get(cv2.CAP_PROP_FPS)
+        if fps == 0:
+            return 30
+        else:
+            return int(fps)
+    
+    def release(self) -> None:
+        self.capture.release()
+    
     def __iter__(self) -> "GazeTrackingFromVideo":
         return self
     
     def __next__(self) -> np.ndarray:
         ret, raw_frame = self.capture.read()
         if not ret:
-            self.capture.release()
+            self.release()
             raise StopIteration(raw_frame)
         
         if self.flip:

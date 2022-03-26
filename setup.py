@@ -20,7 +20,7 @@ setup(
     url="https://github.com/Ovizro/GazeTracking",
 
     packages=["gaze_tracking"],
-    package_data={'':["*.dat"]},
+    package_data={'': ["trained_models/*.dat"]},
     install_requires=["numpy", "opencv-python", "dlib"],
 
     classifiers=[
