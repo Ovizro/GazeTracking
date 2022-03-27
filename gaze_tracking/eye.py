@@ -128,6 +128,6 @@ class Eye(object):
         try:
             ratio = eye_width / eye_height
         except ZeroDivisionError:
-            ratio = 0
+            ratio = 0.0
 
         return ratio
