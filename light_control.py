@@ -8,7 +8,7 @@ from gaze_tracking import GazeTrackingFromVideo
 from screen_brightness_control import set_brightness
 
 parse = ArgumentParser()
-parse.add_argument("-v", "--videocapture", default=0, type=int)
+parse.add_argument("-v", "--videocapture", default=0, type=int, help="camera id")
 parse.add_argument("-e", "--equalizehist", action="store_true")
 parse.add_argument("-f", "--flip", action="store_true", help="flip video frame")
 parse.add_argument("-s", "--show", action="store_true")

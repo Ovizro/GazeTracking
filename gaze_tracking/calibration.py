@@ -26,9 +26,9 @@ class Calibration(object):
         Argument:
             side: Indicates whether it's the left eye (0) or the right eye (1)
         """
-        if side == 0:
+        if side == 1:
             return int(sum(self.thresholds_left) / len(self.thresholds_left))
-        elif side == 1:
+        elif side == 2:
             return int(sum(self.thresholds_right) / len(self.thresholds_right))
         else:
             raise NotImplementedError
@@ -75,7 +75,7 @@ class Calibration(object):
         """
         threshold = self.find_best_threshold(eye_frame)
 
-        if side == 0:
+        if side == 1:
             self.thresholds_left.append(threshold)
-        elif side == 1:
+        elif side == 2:
             self.thresholds_right.append(threshold)

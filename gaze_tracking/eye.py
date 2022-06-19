@@ -7,9 +7,9 @@ from .pupil import Pupil
 from .calibration import Calibration
 
 
-LEFT_EYE = 0
-RIGHT_EYE = 1
-BOTH_EYES = 2
+LEFT_EYE = 1
+RIGHT_EYE = 2
+BOTH_EYES = 3
 
 
 def _middle_point(p1: np.ndarray, p2: np.ndarray) -> Tuple[int, int]:

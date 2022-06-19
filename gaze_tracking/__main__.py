@@ -1,7 +1,6 @@
 import sys
 import cv2
 from argparse import ArgumentParser
-from typing import List, Sequence
 
 from . import GazeTracking, GazeTrackingFromVideo
 

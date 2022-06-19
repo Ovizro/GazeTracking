@@ -13,6 +13,7 @@ setup(
     version="1.0.0-Beta",
     description="Eye Tracking library easily implementable to your projects",
     long_description=ldescription,
+    long_description_content_type='text/markdown',
 
     author="antoinelame",
     maintainer="Ovizro",
