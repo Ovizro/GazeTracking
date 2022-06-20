@@ -7,9 +7,9 @@ from typing import List, Optional
 
 from gaze_tracking import GazeTrackingFromVideo
 
-COUNT = 100
+COUNT = 500
 
-gaze = GazeTrackingFromVideo(2, flip=True)
+gaze = GazeTrackingFromVideo(1, flip=True)
 
 data = pd.DataFrame(
     index=pd.RangeIndex(1, COUNT + 1), 
@@ -45,27 +45,36 @@ def main() -> None:
 
         l_pupil = gaze.pupil_left_coords()
         r_pupil = gaze.pupil_right_coords()
-        l_origin: List[int] = gaze.eye_left.origin
-        r_origin: List[int] = gaze.eye_right.origin
 
         d = data.loc[i]
-        d["focus.x"] = center_x
-        d["focus.y"] = center_y
+        l_eye = gaze.eye_left
+        r_eye = gaze.eye_right
+        if i <= COUNT // 2:
+            d["focus.x"] = center_x
+            d["focus.y"] = center_y
         d["l_pupil.x"] = l_pupil[0]
         d["l_pupil.y"] = l_pupil[1]
         d["r_pupil.x"] = r_pupil[0]
         d["r_pupil.y"] = r_pupil[1]
-        d["l_eye.x"] = gaze.eye_left.origin[0] + gaze.eye_left.center[0]
-        d["l_eye.y"] = gaze.eye_left.origin[1] + gaze.eye_left.center[1]
-        d["r_eye.x"] = gaze.eye_right.origin[0] + gaze.eye_right.center[0]
-        d["r_eye.y"] = gaze.eye_right.origin[1] + gaze.eye_right.center[1]
+        d["l_eye.x"] = l_eye.origin[0] + l_eye.center[0]
+        d["l_eye.y"] = l_eye.origin[1] + l_eye.center[1]
+        d["r_eye.x"] = r_eye.origin[0] + r_eye.center[0]
+        d["r_eye.y"] = r_eye.origin[1] + r_eye.center[1]
+        d["l_eye_s.x"] = l_eye.center[0] * 2
+        d["l_eye_s.y"] = l_eye.center[1] * 2
+        d["r_eye_s.x"] = r_eye.center[0] * 2
+        d["r_eye_s.y"] = r_eye.center[1] * 2
 
         i += 1
         if i > COUNT:
             c_exit()
-        center_x = randint(5, width - 5)
-        center_y = randint(5, height - 5)
-        c_main.coords(cyc, (center_x - CYC_SIZE, center_y - CYC_SIZE, center_x + CYC_SIZE, center_y + CYC_SIZE))
+        elif i > COUNT // 2:
+            c_main.delete(cyc)
+            c_main.create_text(width // 2, height // 2, text="接下来请不要注视屏幕并按下Enter")
+        else:
+            center_x = randint(5, width - 5)
+            center_y = randint(5, height - 5)
+            c_main.coords(cyc, (center_x - CYC_SIZE, center_y - CYC_SIZE, center_x + CYC_SIZE, center_y + CYC_SIZE))
     
     c_main.pack(fill='both')
 
@@ -78,9 +87,10 @@ def main() -> None:
         tk.destroy()
     tk.bind_all("<KeyRelease-Q>", c_exit)
     tk.bind_all("<KeyRelease-q>", c_exit)
-    tk.bind_all("Esc>", c_exit)
+    tk.bind_all("<Escape>", c_exit)
     tk.bind_all("<Return>", update, add=True)
 
+    c_main.focus()
     tk.mainloop()
 
 if __name__ == "__main__":
