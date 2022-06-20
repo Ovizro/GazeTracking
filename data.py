@@ -15,7 +15,7 @@ data = pd.DataFrame(
     index=pd.RangeIndex(1, COUNT + 1), 
     columns=[
         "focus.x", "focus.y", "l_pupil.x","l_pupil.y", "r_pupil.x", "r_pupil.y",
-        "l_eye.x", "l_eye.y", "r_eye.x", "r_eye.y"
+        "l_eye.x", "l_eye.y", "r_eye.x", "r_eye.y", "l_eye_s.x", "l_eye_s.y", "r_eye_s.x", "r_eye_s.y"
     ]
 )
 
