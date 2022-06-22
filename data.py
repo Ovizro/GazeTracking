@@ -19,6 +19,8 @@ data = pd.DataFrame(
     ]
 )
 
+fail = 0
+
 
 def main() -> None:
     tk = Tk()
@@ -38,9 +40,11 @@ def main() -> None:
 
     i = 1
     def update(event: Event):
+        global fail
         nonlocal center_x, center_y, i
         next(gaze)
         if not gaze.pupils_located:
+            fail += 1
             return
 
         l_pupil = gaze.pupil_left_coords()
@@ -67,8 +71,10 @@ def main() -> None:
 
         i += 1
         if i > COUNT:
+            print(COUNT / (COUNT + fail))
             c_exit()
-        elif i > COUNT // 2:
+        elif i == (COUNT // 2) + 1:
+            print(COUNT / (COUNT + fail))
             c_main.delete(cyc)
             c_main.create_text(width // 2, height // 2, text="接下来请不要注视屏幕并按下Enter")
         else:
@@ -83,7 +89,7 @@ def main() -> None:
             ans = messagebox.askyesno("Data collection unfinished", "Do you want to quit now?")
             if not ans:
                 return
-        data.to_excel("data.xlsx")
+        data.to_excel(f"data-{width}-{height}.xlsx")
         tk.destroy()
     tk.bind_all("<KeyRelease-Q>", c_exit)
     tk.bind_all("<KeyRelease-q>", c_exit)
